@@ -1,4 +1,4 @@
-<!-- noctura-vision/backend/wstest.html -->
+<!-- noctura-vision/backend/wstest.html (v2 with fixes) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,12 +8,14 @@
         body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; }
         .container { display: flex; gap: 20px; margin-top: 20px; }
         video, img { border: 2px solid #ccc; max-width: 480px; }
+        /* --- FIX 1: Flip the local webcam preview to match the un-mirrored output --- */
+        #webcam { transform: scaleX(-1); }
         .controls { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
         #status { font-weight: bold; }
     </style>
 </head>
 <body>
-    <h1>NocturaVision WebSocket Test</h1>
+    <h1>NocturaVision WebSocket Test (v2)</h1>
     <div class="controls">
         <button id="startButton">Start Webcam</button>
         <button id="stopButton" disabled>Stop Webcam</button>
@@ -27,11 +29,14 @@
         <div>
             <label><input type="checkbox" id="enhanceCheckbox" checked> Apply Low-Light Enhancement</label>
         </div>
+        <div>
+            <label><input type="checkbox" id="fpsCheckbox" checked> Show FPS</label>
+        </div>
         <p>Status: <span id="status">Idle</span></p>
     </div>
     <div class="container">
         <div>
-            <h2>Original Webcam</h2>
+            <h2>Original Webcam (Un-mirrored)</h2>
             <video id="webcam" autoplay playsinline></video>
         </div>
         <div>
@@ -48,33 +53,38 @@
         const statusSpan = document.getElementById('status');
         const modelSelect = document.getElementById('modelSelect');
         const enhanceCheckbox = document.getElementById('enhanceCheckbox');
+        const fpsCheckbox = document.getElementById('fpsCheckbox');
 
         let websocket;
         let stream;
-        let intervalId;
+        // --- FIX 2: We will use a flag and requestAnimationFrame instead of setInterval ---
+        let isStreaming = false;
 
         const WS_URL = "ws://127.0.0.1:8000/ws/process_video";
 
         startButton.onclick = async () => {
             try {
-                // 1. Get webcam stream
                 stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 webcamVideo.srcObject = stream;
                 statusSpan.textContent = 'Webcam started.';
                 
-                // 2. Open WebSocket connection
                 websocket = new WebSocket(WS_URL);
+
                 websocket.onopen = () => {
                     statusSpan.textContent = 'WebSocket Connected. Processing...';
                     startButton.disabled = true;
                     stopButton.disabled = false;
-                    // 3. Start sending frames every ~100ms
-                    intervalId = setInterval(sendFrame, 100);
+                    isStreaming = true;
+                    // --- FIX 2: Kick off the first frame processing ---
+                    requestAnimationFrame(processAndSendFrame); 
                 };
 
                 websocket.onmessage = (event) => {
-                    // 5. Receive processed frame and display it
                     processedImage.src = event.data;
+                    // --- FIX 2: Request the NEXT frame only after the PREVIOUS one is received ---
+                    if (isStreaming) {
+                        requestAnimationFrame(processAndSendFrame);
+                    }
                 };
 
                 websocket.onclose = () => {
@@ -98,29 +108,41 @@
             stopStreaming();
         };
 
-        function sendFrame() {
-            if (websocket && websocket.readyState === WebSocket.OPEN) {
-                // 4. Capture a frame, convert to Base64, and send
-                const canvas = document.createElement('canvas');
-                canvas.width = webcamVideo.videoWidth;
-                canvas.height = webcamVideo.videoHeight;
-                const context = canvas.getContext('2d');
-                context.drawImage(webcamVideo, 0, 0, canvas.width, canvas.height);
-                const dataUrl = canvas.toDataURL('image/jpeg');
-
-                const payload = {
-                    image_b64: dataUrl,
-                    model_type: modelSelect.value,
-                    apply_enhancement: enhanceCheckbox.checked,
-                    score_threshold: 0.5,
-                    input_max_dim: 720
-                };
-                websocket.send(JSON.stringify(payload));
+        // --- FIX 2: This function now replaces the old setInterval loop ---
+        function processAndSendFrame() {
+            if (!isStreaming || !websocket || websocket.readyState !== WebSocket.OPEN) {
+                return;
             }
+            if (!webcamVideo.videoWidth || !webcamVideo.videoHeight) {
+                // If video isn't ready, try again on the next animation frame
+                requestAnimationFrame(processAndSendFrame);
+                return;
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = webcamVideo.videoWidth;
+            canvas.height = webcamVideo.videoHeight;
+            const context = canvas.getContext('2d');
+            
+            // Un-mirror the image data before sending
+            context.translate(canvas.width, 0);
+            context.scale(-1, 1);
+            context.drawImage(webcamVideo, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL('image/jpeg');
+
+            const payload = {
+                image_b64: dataUrl,
+                model_type: modelSelect.value,
+                apply_enhancement: enhanceCheckbox.checked,
+                show_fps: fpsCheckbox.checked,
+                score_threshold: 0.5,
+                input_max_dim: 720
+            };
+            websocket.send(JSON.stringify(payload));
         }
 
         function stopStreaming() {
-            if (intervalId) clearInterval(intervalId);
+            isStreaming = false;
             if (websocket) websocket.close();
             if (stream) {
                 stream.getTracks().forEach(track => track.stop());

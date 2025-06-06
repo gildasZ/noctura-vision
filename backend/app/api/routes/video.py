@@ -4,6 +4,7 @@ from typing import Dict, Any
 import base64
 import io
 import torch
+import time
 import cv2
 import numpy as np
 from PIL import Image
@@ -23,12 +24,14 @@ async def websocket_process_video(
     models: Dict[str, Any] = Depends(get_models)
 ):
     await websocket.accept()
+    prev_frame_time = 0
     try:
         while True:
             # Receive configuration and image data from client
             data = await websocket.receive_json()
             
             # --- Extract parameters from the received JSON data ---
+            show_fps = data.get("show_fps", False)
             model_type = data.get("model_type", "mask2former")
             apply_enhancement = data.get("apply_enhancement", True)
             score_threshold = data.get("score_threshold", 0.5)
@@ -65,7 +68,15 @@ async def websocket_process_video(
                     outputs = models["mask2former_model"](**inputs)
                 masks, labels, scores = postprocess_mask2former_outputs(outputs, models["mask2former_processor"], img_pil_seg.size[::-1], score_threshold)
                 output_image_bgr = draw_mask2former_instance_segmentation(output_image_bgr, masks, labels, scores, models["mask2former_id2label"], score_threshold)
-                
+
+            if show_fps:
+                new_frame_time = time.time()
+                if prev_frame_time > 0:
+                    fps = 1 / (new_frame_time - prev_frame_time)
+                    cv2.putText(output_image_bgr, f"FPS: {fps:.2f}", 
+                                (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2, cv2.LINE_AA)
+                prev_frame_time = new_frame_time
+
             # --- Encode and send back the processed frame ---
             _, buffer = cv2.imencode(".jpg", output_image_bgr)
             processed_b64 = base64.b64encode(buffer).decode('utf-8')

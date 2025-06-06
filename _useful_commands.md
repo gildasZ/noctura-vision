@@ -35,7 +35,6 @@ python _list_structure.py --depth 6
 python _list_structure.py /home/you/myproj
 ## Or to limit to 3:
 python _list_structure.py /home/you/myproj --depth 3
-
 ```
 
 ---
@@ -44,5 +43,26 @@ python _list_structure.py /home/you/myproj --depth 3
 pipenv install torch torchvision torchaudio --index https://download.pytorch.org/whl/cu128
 ```
 
+---
+# -> Backend work
+## 1. Run the backend server using pipenv
+~~~~bash
+# Supposing you are already in the 'backend/' directory
+pipenv run uvicorn app.main:app --reload
+# or
+pipenv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+~~~~
+~~~~bash
+* Access /ping while the server is running:
+    - Open a new terminal window and run:
+        ~~~bash
+        curl http://localhost:8000/health
+        ~~~
+    - or a web browser and navigate to:
+        ~~~bash
+        http://localhost:8000/health
+        ~~~
+* You should see `{"status":"ok"}` as the JSON response.
+~~~~
 
 I need to get the new formatted commands for running the backend...
