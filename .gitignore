@@ -1,0 +1,61 @@
+# .gitignore
+# Standard Python ignores
+__pycache__/
+*.pyc
+*.log
+.venv/
+venv/
+env/
+.pipenv/
+Pipfile
+Pipfile.lock
+build/
+dist/
+.mypy_cache/
+.pytest_cache/
+
+# Standard Node.js ignores
+node_modules/
+dist/
+build/
+
+# Environment files (avoid committing secrets)
+# ignore all .env* files
+.env*
+# but do NOT ignore the example
+!.env.example
+
+# Editor/IDE specific ignores
+.idea/
+.vscode/
+*.iml
+*.swp
+*~
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml # If used locally for overrides
+*.env # Specific to docker-compose
+
+# ... Other ignore patterns ...
+_code_state.md
+# _code_state.py
+# _list_structure.py
+_PROJECT_STRUCTURE.md
+
+# ----------------------------------
+# Ignore every entry inside backend/models_cache/
+backend/models_cache/*
+# But do not ignore the zero_dce directory…
+!backend/models_cache/zero_dce/
+# …and do not ignore any files/folders under zero_dce either
+!backend/models_cache/zero_dce/**
+# ----------------------------------
+
+# ----------------------------------
+# Ignore every entry inside data/
+data/*
+# ----------------------------------
