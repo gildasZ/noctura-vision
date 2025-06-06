@@ -44,25 +44,51 @@ pipenv install torch torchvision torchaudio --index https://download.pytorch.org
 ```
 
 ---
-# -> Backend work
-## 1. Run the backend server using pipenv
-~~~~bash
-# Supposing you are already in the 'backend/' directory
-pipenv run uvicorn app.main:app --reload
-# or
-pipenv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-~~~~
-~~~~bash
-* Access /ping while the server is running:
-    - Open a new terminal window and run:
-        ~~~bash
-        curl http://localhost:8000/health
-        ~~~
-    - or a web browser and navigate to:
-        ~~~bash
-        http://localhost:8000/health
-        ~~~
-* You should see `{"status":"ok"}` as the JSON response.
-~~~~
+# -> Backend: Running the FastAPI Backend and Testing Endpoints
+
+These are the primary commands for running and testing the `noctura-vision` backend application.
+
+### 1. Start the Server
+
+First, ensure your `pipenv` virtual environment is set up and all dependencies are installed.
+
+1.  Navigate to the `backend` directory:
+    ```bash
+    cd path/to/noctura-vision/backend
+    ```
+
+2.  Run the Uvicorn server using `pipenv`:
+    ```bash
+    pipenv run uvicorn app.main:app --reload
+    # or
+    # pipenv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+    ```
+    *   This command starts the web server.
+    *   The first time you run this, it will take several minutes to download the AI models into the `backend/models_cache` directory.
+    *   `--reload` makes the server restart automatically when you save code changes, which is perfect for development.
+
+### 2. Test the HTTP Endpoints (Image Processing)
+
+Once the server is running, you can test the standard API endpoints.
+
+1.  Open your web browser and go to the interactive documentation page:
+    ```
+    http://127.0.0.1:8000/docs
+    ```
+2.  From this page, you can test the following endpoints:
+    *   `GET /health` (Or `http://localhost:8000/health`): A simple check to see if the server is running. You should see `{"status":"ok"}` as the JSON response.
+    *   `GET /api/v1/models`: Returns a list of the available segmentation models.
+    *   `POST /api/v1/process_image`: Upload an image file and choose processing options to get a result.
+
+### 3. Test the WebSocket Endpoint (Video Streaming)
+
+The WebSocket for real-time video cannot be tested from the `/docs` page.
+
+1.  In your file explorer, navigate to the `noctura-vision/backend/` directory.
+2.  Open the `wstest.html` file directly in your web browser (e.g., by double-clicking it).
+3.  The browser will ask for permission to use your webcam. Click **Allow**.
+4.  Click the **"Start Webcam"** button to begin the real-time processing stream. You can then interact with the model and enhancement options on the page.
+
+---
 
 I need to get the new formatted commands for running the backend...
