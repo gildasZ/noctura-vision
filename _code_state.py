@@ -18,37 +18,22 @@ FILES_TO_EXTRACT = [
     # "README.md" # Include the original README to see what to replace
     # "_PROJECT_STRUCTURE.md",
 
-    # Project Documentation & Utilities
-    "README.md",
+    # Project Overview
     "_PROJECT_STRUCTURE.md",
-    "_code_state.py",
-    "_list_structure.py", # Useful for understanding how project structure is generated
-    "_useful_commands.md", # May contain setup or execution commands
+    "README.md",
+    "_useful_commands.md",
 
-    # Mask R-CNN (model-d/mask-r-cnn)
-    "model-d/mask-r-cnn/_Implementation_Summary.md",
-    "model-d/mask-r-cnn/inference_pipeline_demo.py",
-    "model-d/mask-r-cnn/inference_pipeline_stream.py",
-    "model-d/mask-r-cnn/inference_torchvision_model_d_single_image.py",
-    "model-d/mask-r-cnn/inference_torchvision_model_d_stream.py",
-    "model-d/mask-r-cnn/inference_zero_dce_single_image.py", # If zero_dce integration is directly here
-    "model-d/mask-r-cnn/utils.py", # Common utilities for Mask R-CNN
+    # Backend API "Contract" Files
+    "backend/app/main.py",
+    "backend/app/api/routes/segmentation.py",
+    "backend/app/api/routes/video.py",
 
-    # Mask2Former (model-d/mask2former-hf)
-    "model-d/mask2former-hf/_Implementation_Summary.md",
-    "model-d/mask2former-hf/inference_pipeline_demo.py",
-    "model-d/mask2former-hf/inference_pipeline_stream.py",
-    "model-d/mask2former-hf/inference_mask2former_single_image.py",
-    "model-d/mask2former-hf/inference_mask2former_stream.py",
-    "model-d/mask2former-hf/inference_zero_dce_single_image.py", # If zero_dce integration is directly here
-    "model-d/mask2former-hf/utils.py", # Common utilities for Mask2Former
+    # Frontend Starter Files
+    "frontend/package.json",
+    "frontend/src/App.js",
 
-    # Zero-DCE++ (model-e/zero-dce-plusplus) - The enhancement model itself
-    "model-e/zero-dce-plusplus/README.md",
-    "model-e/zero-dce-plusplus/requirements.txt",
-    "model-e/zero-dce-plusplus/main.py", # Core execution script for Zero-DCE++
-    "model-e/zero-dce-plusplus/zero_dce/model.py", # The neural network definition
-    "model-e/zero-dce-plusplus/zero_dce/utils.py", # Utilities for Zero-DCE++
+    # Working WebSocket Test Client (Crucial Reference for React)
+    "backend/wstest.html"
 ]
 
 MARKDOWN_OUTPUT = []
