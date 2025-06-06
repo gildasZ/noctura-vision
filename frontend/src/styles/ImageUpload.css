@@ -1,0 +1,53 @@
+/* frontend/src/styles/ImageUpload.css */
+.image-upload-container {
+    background-color: #4a4f5a;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    flex: 1; /* Take up half the space in main-content */
+    min-height: 200px;
+}
+
+.image-upload-container h3 {
+    margin: 0 0 10px 0;
+    color: #61dafb;
+}
+
+.image-upload-container input[type="file"] {
+    border: 2px dashed #ccc;
+    padding: 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 80%;
+    text-align: center;
+}
+
+.process-button {
+    background-color: #61dafb;
+    color: #20232a;
+    border: none;
+    padding: 12px 24px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.1s;
+}
+
+.process-button:hover:not(:disabled) {
+    background-color: #52b8d8;
+}
+
+.process-button:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.process-button:disabled {
+    background-color: #555;
+    color: #888;
+    cursor: not-allowed;
+}
