@@ -1,0 +1,136 @@
+<!-- noctura-vision/backend/wstest.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NocturaVision WebSocket Test</title>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; }
+        .container { display: flex; gap: 20px; margin-top: 20px; }
+        video, img { border: 2px solid #ccc; max-width: 480px; }
+        .controls { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+        #status { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>NocturaVision WebSocket Test</h1>
+    <div class="controls">
+        <button id="startButton">Start Webcam</button>
+        <button id="stopButton" disabled>Stop Webcam</button>
+        <div>
+            <label for="modelSelect">Model:</label>
+            <select id="modelSelect">
+                <option value="mask2former">Mask2Former</option>
+                <option value="maskrcnn">Mask R-CNN</option>
+            </select>
+        </div>
+        <div>
+            <label><input type="checkbox" id="enhanceCheckbox" checked> Apply Low-Light Enhancement</label>
+        </div>
+        <p>Status: <span id="status">Idle</span></p>
+    </div>
+    <div class="container">
+        <div>
+            <h2>Original Webcam</h2>
+            <video id="webcam" autoplay playsinline></video>
+        </div>
+        <div>
+            <h2>Processed Output</h2>
+            <img id="processedImage" />
+        </div>
+    </div>
+
+    <script>
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+        const webcamVideo = document.getElementById('webcam');
+        const processedImage = document.getElementById('processedImage');
+        const statusSpan = document.getElementById('status');
+        const modelSelect = document.getElementById('modelSelect');
+        const enhanceCheckbox = document.getElementById('enhanceCheckbox');
+
+        let websocket;
+        let stream;
+        let intervalId;
+
+        const WS_URL = "ws://127.0.0.1:8000/ws/process_video";
+
+        startButton.onclick = async () => {
+            try {
+                // 1. Get webcam stream
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                webcamVideo.srcObject = stream;
+                statusSpan.textContent = 'Webcam started.';
+                
+                // 2. Open WebSocket connection
+                websocket = new WebSocket(WS_URL);
+                websocket.onopen = () => {
+                    statusSpan.textContent = 'WebSocket Connected. Processing...';
+                    startButton.disabled = true;
+                    stopButton.disabled = false;
+                    // 3. Start sending frames every ~100ms
+                    intervalId = setInterval(sendFrame, 100);
+                };
+
+                websocket.onmessage = (event) => {
+                    // 5. Receive processed frame and display it
+                    processedImage.src = event.data;
+                };
+
+                websocket.onclose = () => {
+                    statusSpan.textContent = 'WebSocket Disconnected.';
+                    stopStreaming();
+                };
+
+                websocket.onerror = (error) => {
+                    statusSpan.textContent = 'WebSocket Error!';
+                    console.error("WebSocket Error:", error);
+                    stopStreaming();
+                };
+
+            } catch (err) {
+                console.error("Error starting webcam:", err);
+                statusSpan.textContent = 'Error starting webcam!';
+            }
+        };
+
+        stopButton.onclick = () => {
+            stopStreaming();
+        };
+
+        function sendFrame() {
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+                // 4. Capture a frame, convert to Base64, and send
+                const canvas = document.createElement('canvas');
+                canvas.width = webcamVideo.videoWidth;
+                canvas.height = webcamVideo.videoHeight;
+                const context = canvas.getContext('2d');
+                context.drawImage(webcamVideo, 0, 0, canvas.width, canvas.height);
+                const dataUrl = canvas.toDataURL('image/jpeg');
+
+                const payload = {
+                    image_b64: dataUrl,
+                    model_type: modelSelect.value,
+                    apply_enhancement: enhanceCheckbox.checked,
+                    score_threshold: 0.5,
+                    input_max_dim: 720
+                };
+                websocket.send(JSON.stringify(payload));
+            }
+        }
+
+        function stopStreaming() {
+            if (intervalId) clearInterval(intervalId);
+            if (websocket) websocket.close();
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                webcamVideo.srcObject = null;
+            }
+            startButton.disabled = false;
+            stopButton.disabled = true;
+            statusSpan.textContent = 'Idle';
+            processedImage.src = "";
+        }
+    </script>
+</body>
+</html>
